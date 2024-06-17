@@ -92,11 +92,11 @@ const styles = StyleSheet.create({
   startButton: {
     marginBottom: 50,
     backgroundColor: theme.colors.neutral(0.9),
-    padding: 20,
-    paddingHorizontal: 70,
+    padding: 15,
+    paddingHorizontal: 60,
     borderRadius: theme.radius.xl,
     borderCurve: "continuous",
-    width: wp(80),
+    width: wp(85),
     marginHorizontal: "auto",
   },
   startText: {
