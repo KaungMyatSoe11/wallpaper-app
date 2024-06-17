@@ -6,7 +6,7 @@ import {
   ScrollView,
   TextInput,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
@@ -14,6 +14,7 @@ import { hp, wp } from "../../helpers/common";
 import Categories from "../../components/categories";
 import { apiCall } from "../../api";
 import ImageGrid from "../../components/imageGrid";
+import { debounce } from "lodash";
 
 const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
@@ -22,7 +23,6 @@ const HomeScreen = () => {
   const [images, setImages] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const refSearchInput = useRef(null);
-  console.log(activeCategory);
   useEffect(() => {
     fetchImages();
   }, []);
@@ -37,8 +37,37 @@ const HomeScreen = () => {
       }
     }
   };
+
+  const handleSearch = (text) => {
+    console.log("search for: ", text);
+    setSearch(text);
+    if (text.length > 2) {
+      setImages([]);
+      fetchImages({ page: 1, q: text });
+      setActiveCategory(null);
+    }
+    if (text == "") {
+      setImages([]);
+      fetchImages({ page: 1 });
+      setActiveCategory(null);
+      refSearchInput?.current?.clear();
+    }
+  };
+
+  const handleTextDebounce = useCallback(debounce(handleSearch, 400), []);
+
+  const clearSearch = () => {
+    setSearch("");
+    refSearchInput?.current?.clear();
+  };
+
   const handleChangeCategory = (value) => {
     setActiveCategory(value);
+    clearSearch();
+    setImages([]);
+    let params = { page: 1 };
+    if (value) params.category = value;
+    fetchImages(params, false);
   };
   return (
     <View style={[styles.container, { paddingTop }]}>
@@ -62,10 +91,13 @@ const HomeScreen = () => {
             ref={refSearchInput}
             placeholder="Search  For photos"
             style={styles.searchInput}
-            onChange={(value) => setSearch(value)}
+            onChangeText={handleTextDebounce}
           />
           {search && (
-            <Pressable style={styles.closeIcon}>
+            <Pressable
+              style={styles.closeIcon}
+              onPress={() => handleSearch("")}
+            >
               <Ionicons
                 name="close"
                 size={24}
@@ -80,11 +112,7 @@ const HomeScreen = () => {
           handleChangeCategory={handleChangeCategory}
         />
 
-        <View>
-          {
-            images.length>0 && <ImageGrid images={images}/>
-          }
-        </View>
+        <View>{images.length > 0 && <ImageGrid images={images} />}</View>
       </ScrollView>
     </View>
   );
