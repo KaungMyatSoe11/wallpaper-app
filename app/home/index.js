@@ -15,6 +15,7 @@ import Categories from "../../components/categories";
 import { apiCall } from "../../api";
 import ImageGrid from "../../components/imageGrid";
 import { debounce } from "lodash";
+import FilterModal from "../../components/FilterModal";
 
 const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
@@ -23,6 +24,8 @@ const HomeScreen = () => {
   const [images, setImages] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const refSearchInput = useRef(null);
+  const refModal = useRef(null);
+
   useEffect(() => {
     fetchImages();
   }, []);
@@ -69,13 +72,21 @@ const HomeScreen = () => {
     if (value) params.category = value;
     fetchImages(params, false);
   };
+
+  const openFilterModal = () => {
+    refModal?.current?.present();
+  };
+  const closeFilterModal = () => {
+    refModal?.current?.close();
+  };
+
   return (
     <View style={[styles.container, { paddingTop }]}>
       <View style={styles.header}>
         <Pressable>
           <Text style={styles.title}>Pixels</Text>
         </Pressable>
-        <Pressable>
+        <Pressable onPress={openFilterModal}>
           <FontAwesome6
             name="bars-staggered"
             size={22}
@@ -113,6 +124,8 @@ const HomeScreen = () => {
         />
 
         <View>{images.length > 0 && <ImageGrid images={images} />}</View>
+
+        <FilterModal modalRef={refModal} />
       </ScrollView>
     </View>
   );
