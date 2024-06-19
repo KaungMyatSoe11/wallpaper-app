@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +24,7 @@ const HomeScreen = () => {
   const [search, setSearch] = useState("");
   const [images, setImages] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [filters, setFilters] = useState(null);
   const refSearchInput = useRef(null);
   const refModal = useRef(null);
 
@@ -46,12 +48,12 @@ const HomeScreen = () => {
     setSearch(text);
     if (text.length > 2) {
       setImages([]);
-      fetchImages({ page: 1, q: text });
+      fetchImages({ page: 1, q: text, ...filters });
       setActiveCategory(null);
     }
     if (text == "") {
       setImages([]);
-      fetchImages({ page: 1 });
+      fetchImages({ page: 1, ...filters });
       setActiveCategory(null);
       refSearchInput?.current?.clear();
     }
@@ -68,7 +70,7 @@ const HomeScreen = () => {
     setActiveCategory(value);
     clearSearch();
     setImages([]);
-    let params = { page: 1 };
+    let params = { page: 1, ...filters };
     if (value) params.category = value;
     fetchImages(params, false);
   };
@@ -78,6 +80,47 @@ const HomeScreen = () => {
   };
   const closeFilterModal = () => {
     refModal?.current?.close();
+  };
+
+  const applyFilters = () => {
+    console.log("applyFilters");
+    if (filters) {
+      setImages([]);
+      let params = { page: 1, ...filters };
+      if (activeCategory) params.category = activeCategory;
+      if (search) params.q = search;
+      fetchImages(params, false);
+    }
+    closeFilterModal();
+  };
+
+  const resetFilters = () => {
+    console.log("resetFilters");
+    if (filters) {
+      setFilters(null);
+      setImages([]);
+      let params = {
+        page: 1,
+      };
+
+      if (activeCategory) params.category = activeCategory;
+      if (search) params.q = search;
+      fetchImages(params, false);
+    }
+    closeFilterModal();
+  };
+  console.log(filters);
+
+  const clearThisFilter = (filterName) => {
+    let filterz = { ...filters };
+    delete filterz[filterName];
+    setFilters({ ...filterz });
+    setImages([]);
+    let params = { page: 1, ...filterz };
+
+    if (activeCategory) params.category = activeCategory;
+    if (search) params.q = search;
+    fetchImages(params, false);
   };
 
   return (
@@ -123,9 +166,61 @@ const HomeScreen = () => {
           handleChangeCategory={handleChangeCategory}
         />
 
+        {filters && (
+          <View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filters}
+            >
+              {Object.keys(filters).map((key, index) => {
+                return (
+                  <View key={key} style={styles.filterItem}>
+                    {key == "colors" ? (
+                      <View
+                        style={{
+                          height: 20,
+                          width: 30,
+                          borderRadius: 7,
+                          backgroundColor: filters[key],
+                        }}
+                      />
+                    ) : (
+                      <Text style={styles.filterItemText}>{filters[key]}</Text>
+                    )}
+                    <Pressable
+                      style={styles.filterCloseIcon}
+                      onPress={() => clearThisFilter(key)}
+                    >
+                      <Ionicons
+                        name="close"
+                        size={14}
+                        color={theme.colors.neutral(0.9)}
+                      />
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         <View>{images.length > 0 && <ImageGrid images={images} />}</View>
 
-        <FilterModal modalRef={refModal} />
+        <View
+          style={{ marginBottom: 70, marginTop: images.length > 0 ? 10 : 70 }}
+        >
+          <ActivityIndicator size={"large"} />
+        </View>
+
+        <FilterModal
+          modalRef={refModal}
+          filters={filters}
+          setFilters={setFilters}
+          onClose={closeFilterModal}
+          onApply={applyFilters}
+          onReset={resetFilters}
+        />
       </ScrollView>
     </View>
   );
@@ -172,6 +267,27 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral(0.1),
     padding: 8,
     borderRadius: theme.radius.sm,
+  },
+  filters: {
+    paddingHorizontal: wp(4),
+    gap: 10,
+  },
+  filterItem: {
+    backgroundColor: theme.colors.grayBG,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: theme.radius.xs,
+    padding: 8,
+    gap: 10,
+    paddingHorizontal: 10,
+  },
+  filterItemText: {
+    fontSize: hp(1.8),
+  },
+  filterCloseIcon: {
+    backgroundColor: theme.colors.neutral(0.2),
+    padding: 4,
+    borderRadius: 7,
   },
 });
 export default HomeScreen;

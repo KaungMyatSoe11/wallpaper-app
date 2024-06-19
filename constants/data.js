@@ -21,4 +21,22 @@ const categories = [
   "music",
 ];
 
-export { categories };
+const filters = {
+  order: ["popular", "latest"],
+  orientation: ["horizontal", "vertical"],
+  type: ["photo", "illustration", "vector"],
+  colors: [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "pink",
+    "white",
+    "gray",
+    "black",
+    "brown",
+  ],
+};
+
+export { categories, filters };
