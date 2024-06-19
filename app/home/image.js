@@ -19,6 +19,9 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Toast from "react-native-toast-message";
+import { NativeModules } from 'react-native';
+
+const { WallpaperModule } = NativeModules;
 
 const ImageScreen = () => {
   const router = useRouter();
@@ -45,6 +48,9 @@ const ImageScreen = () => {
       setStatus("downloading");
       let uri = await downloadFile();
       if (uri) showToast("image downloaded.");
+      WallpaperModule.setWallpaper(uri, (res) => {
+        Alert.alert('Wallpaper Set', res);
+      });
     }
   };
 
