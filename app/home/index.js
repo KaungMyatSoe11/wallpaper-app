@@ -17,7 +17,7 @@ import { apiCall } from "../../api";
 import ImageGrid from "../../components/imageGrid";
 import { debounce } from "lodash";
 import FilterModal from "../../components/FilterModal";
-
+let page = 1;
 const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
   const paddingTop = top > 0 ? top + 10 : 30;
@@ -25,8 +25,11 @@ const HomeScreen = () => {
   const [images, setImages] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [filters, setFilters] = useState(null);
+  const [isEndReached, setIsEndReached] = useState(false);
   const refSearchInput = useRef(null);
   const refModal = useRef(null);
+
+  const refScroll = useRef(null);
 
   useEffect(() => {
     fetchImages();
@@ -73,6 +76,39 @@ const HomeScreen = () => {
     let params = { page: 1, ...filters };
     if (value) params.category = value;
     fetchImages(params, false);
+  };
+
+  const handleScroll = (event) => {
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+    const scrollOffset = event.nativeEvent.contentOffset.y;
+    const bottomPosition = contentHeight - scrollViewHeight;
+
+    if (scrollOffset >= bottomPosition - 1) {
+      if (!isEndReached) {
+        setIsEndReached(true);
+        ++page;
+        let params = {
+          page,
+          ...filters,
+        };
+
+        if (activeCategory) params.category = activeCategory;
+        if (search) params.q = search;
+        
+        fetchImages(params)
+        console.log("reached the bottom");
+      }
+    } else if (isEndReached) {
+      setIsEndReached(false);
+    }
+  };
+
+  const handleScrollUp = () => {
+    refScroll?.current?.scrollTo({
+      y: 0,
+      animated: true,
+    });
   };
 
   const openFilterModal = () => {
@@ -126,7 +162,7 @@ const HomeScreen = () => {
   return (
     <View style={[styles.container, { paddingTop }]}>
       <View style={styles.header}>
-        <Pressable>
+        <Pressable onPress={handleScrollUp}>
           <Text style={styles.title}>Pixels</Text>
         </Pressable>
         <Pressable onPress={openFilterModal}>
@@ -138,7 +174,12 @@ const HomeScreen = () => {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ gap: 15 }}>
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={5}
+        ref={refScroll}
+        contentContainerStyle={{ gap: 15 }}
+      >
         <View style={styles.searchBar}>
           <Feather name="search" size={24} color={theme.colors.neutral(0.4)} />
           <TextInput
