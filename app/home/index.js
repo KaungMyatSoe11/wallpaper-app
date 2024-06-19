@@ -17,6 +17,7 @@ import { apiCall } from "../../api";
 import ImageGrid from "../../components/imageGrid";
 import { debounce } from "lodash";
 import FilterModal from "../../components/FilterModal";
+import { useRouter } from "expo-router";
 let page = 1;
 const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
@@ -30,6 +31,7 @@ const HomeScreen = () => {
   const refModal = useRef(null);
 
   const refScroll = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetchImages();
@@ -95,8 +97,8 @@ const HomeScreen = () => {
 
         if (activeCategory) params.category = activeCategory;
         if (search) params.q = search;
-        
-        fetchImages(params)
+
+        fetchImages(params);
         console.log("reached the bottom");
       }
     } else if (isEndReached) {
@@ -246,7 +248,7 @@ const HomeScreen = () => {
           </View>
         )}
 
-        <View>{images.length > 0 && <ImageGrid images={images} />}</View>
+        <View>{images.length > 0 && <ImageGrid images={images} router={router} />}</View>
 
         <View
           style={{ marginBottom: 70, marginTop: images.length > 0 ? 10 : 70 }}
