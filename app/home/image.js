@@ -29,7 +29,6 @@ const ImageScreen = () => {
   const imageUrl = uri;
   const filePath = `${FileSystem.documentDirectory}${fileName}`;
   const onLoad = () => {};
-  console.log("image: ", item);
 
   const handleDownloadImage = async () => {
     if (Platform.OS == "web") {
