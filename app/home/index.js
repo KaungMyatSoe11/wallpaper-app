@@ -5,48 +5,27 @@ import {
   Pressable,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { theme } from "../../constants/theme";
 import { hp, wp } from "../../helpers/common";
-import Categories from "../../components/categories";
-import { apiCall } from "../../api";
-import ImageGrid from "../../components/imageGrid";
 
 const HomeScreen = () => {
   const { top } = useSafeAreaInsets();
   const paddingTop = top > 0 ? top + 10 : 30;
   const [search, setSearch] = useState("");
-  const [images, setImages] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
   const refSearchInput = useRef(null);
-  console.log(activeCategory);
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  const fetchImages = async (params = { page: 1 }, append = true) => {
-    let res = await apiCall(params);
-    if (res.success && res?.data?.hits) {
-      if (append) {
-        setImages([...images, ...res.data.hits]);
-      } else {
-        setImages([...res.data.hits]);
-      }
-    }
-  };
-  const handleChangeCategory = (value) => {
-    setActiveCategory(value);
-  };
+  console.log(search);
   return (
     <View style={[styles.container, { paddingTop }]}>
       <View style={styles.header}>
-        <Pressable>
+        <Pressable onPress={handleScrollUp}>
           <Text style={styles.title}>Pixels</Text>
         </Pressable>
-        <Pressable>
+        <Pressable onPress={openFilterModal}>
           <FontAwesome6
             name="bars-staggered"
             size={22}
@@ -55,17 +34,25 @@ const HomeScreen = () => {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ gap: 15 }}>
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={5}
+        ref={refScroll}
+        contentContainerStyle={{ gap: 15 }}
+      >
         <View style={styles.searchBar}>
           <Feather name="search" size={24} color={theme.colors.neutral(0.4)} />
           <TextInput
             ref={refSearchInput}
             placeholder="Search  For photos"
             style={styles.searchInput}
-            onChange={(value) => setSearch(value)}
+            onChangeText={handleTextDebounce}
           />
           {search && (
-            <Pressable style={styles.closeIcon}>
+            <Pressable
+              style={styles.closeIcon}
+              onPress={() => handleSearch("")}
+            >
               <Ionicons
                 name="close"
                 size={24}
@@ -73,17 +60,6 @@ const HomeScreen = () => {
               />
             </Pressable>
           )}
-        </View>
-
-        <Categories
-          activeCategory={activeCategory}
-          handleChangeCategory={handleChangeCategory}
-        />
-
-        <View>
-          {
-            images.length>0 && <ImageGrid images={images}/>
-          }
         </View>
       </ScrollView>
     </View>
@@ -131,6 +107,27 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral(0.1),
     padding: 8,
     borderRadius: theme.radius.sm,
+  },
+  filters: {
+    paddingHorizontal: wp(4),
+    gap: 10,
+  },
+  filterItem: {
+    backgroundColor: theme.colors.grayBG,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: theme.radius.xs,
+    padding: 8,
+    gap: 10,
+    paddingHorizontal: 10,
+  },
+  filterItemText: {
+    fontSize: hp(1.8),
+  },
+  filterCloseIcon: {
+    backgroundColor: theme.colors.neutral(0.2),
+    padding: 4,
+    borderRadius: 7,
   },
 });
 export default HomeScreen;
